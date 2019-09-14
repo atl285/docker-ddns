@@ -60,9 +60,9 @@ func BuildWebserviceResponseFromRequest(r *http.Request, appConfig *Config) Webs
         if ok {
             ip = header_data[0]
             err = nil
-	    } else {
-		    ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	    }
+	} else {
+	    ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	}
         
         if err != nil {
             response.Success = false
