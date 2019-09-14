@@ -19,6 +19,22 @@ type WebserviceResponse struct {
     AddrType string
 }
 
+
+// Get the Remote Address of the client. At First we try to get the
+// X-Forwarded-For Header which holds the IP if we are behind a proxy,
+// otherwise the RemoteAddr is used
+func extractRemoteAddr(req *http.Request) (string, error) {
+        header_data, ok := req.Header["X-Forwarded-For"]
+
+        if ok {
+                return header_data[0], nil
+        } else {
+                ip, _, err := net.SplitHostPort(req.RemoteAddr)
+                return ip, err
+        }
+}
+
+
 func BuildWebserviceResponseFromRequest(r *http.Request, appConfig *Config) WebserviceResponse {
     response := WebserviceResponse{}
 
@@ -54,16 +70,8 @@ func BuildWebserviceResponseFromRequest(r *http.Request, appConfig *Config) Webs
         response.AddrType = "AAAA"
     } else {
         
-        // first check X-Forwarded-For Header for the IP, if we are behind a proxy
-        header_data, ok := r.Header["X-Forwarded-For"]
-
-        if ok {
-            ip = header_data[0]
-            err = nil
-	} else {
-	    ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	}
-        
+        ip, err := extractRemoteAddr(r)
+	
         if err != nil {
             response.Success = false
             response.Message = fmt.Sprintf("%q is neither a valid IPv4 nor IPv6 address", r.RemoteAddr)
