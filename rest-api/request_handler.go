@@ -53,7 +53,16 @@ func BuildWebserviceResponseFromRequest(r *http.Request, appConfig *Config) Webs
     } else if ipparser.ValidIP6(response.Address) {
         response.AddrType = "AAAA"
     } else {
-        ip, _, err := net.SplitHostPort(r.RemoteAddr)
+        
+        // first check X-Forwarded-For Header for the IP, if we are behind a proxy
+        header_data, ok := r.Header["X-Forwarded-For"]
+
+        if ok {
+            ip = header_data[0]
+            err = nil
+	    } else {
+		    ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	    }
         
         if err != nil {
             response.Success = false
